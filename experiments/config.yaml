@@ -1,0 +1,36 @@
+# dataset settings
+batch_size: 32
+num_workers: 0
+seed: 0
+
+# general settings
+epoch_num: 25
+result_dir: ./result
+checkpoint_dir: ./checkpoint
+
+# optimizer settings
+learning_rate: 1e-4
+weight_decay: 1e-6
+
+# learning_scheduler settings
+factor: 0.1 # sqrt(factor)
+patience: 10
+colldown: 0
+min_learning_rate: 1e-6
+
+# common settings
+hidden_size: 512
+output_size: 2
+dropout: 0.2
+
+# rnn settings
+rnn: GRU_ # GRU, LSTM, Transformer
+bidirection: False
+num_layers: 1
+
+# transformer settings
+nhead: 8
+transformer_dropout: 0.1
+
+# loss function settings
+clip: 0.5

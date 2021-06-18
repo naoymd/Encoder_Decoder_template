@@ -10,18 +10,18 @@ Inputs:
     Bidirectional == False:
         x : (batch_size, sequence_length_size, input_size)
         encoder_out : (batch_size, sequence_length_size, hidden_size)
-        encoder_h : (batch_size, hidden_size)
+        encoder_h : (num_layers, batch_size, hidden_size)
     Bidirectional == True:
         x : (batch_size, sequence_length_size, input_size)
         encoder_out : (batch_size, sequence_length_size, hidden_size*2)
-        encoder_h : (batch_size, hidden_size*2)
+        encoder_h : (num_layers, batch_size, hidden_size*2)
 Outputs:
     Bidirectional == False:
         out, (c_out) : (batch_size, sequence_length_size, hidden_size)
-        h, (c) : (batch_size, hidden_size)
+        h, (c) : (num_layers, batch_size, hidden_size)
     Bidirectional == True:
         out, (c_out) : (batch_size, sequence_length_size, hidden_size*2)
-        h, (c) : (batch_size, hidden_size*2)
+        h, (c) : (num_layers, batch_size, hidden_size*2)
 """
 
 class GRU_Decoder(nn.Module):

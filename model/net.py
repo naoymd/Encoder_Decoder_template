@@ -83,8 +83,8 @@ class Net(nn.Module):
         Output:
             output: (batch_size, max_decoder_length, output_size)
         """
-        e_embed = self.encoder_embed(e_in)
-        d_embed = self.dncoder_embed(d_in)
+        e_embed = self.encoder_embed(e_in.unsqueeze(dim=-1))
+        d_embed = self.dncoder_embed(d_in.unsqueeze(dim=-1))
         if e_len is not None:
             e_mask = self.get_mask(e_embed, e_len)
         if d_len is not None:

@@ -37,7 +37,7 @@ class Attention(nn.Module):
         self.mask = kwargs.get('mask', False)
         self.scaled = kwargs.get('scaled', True)
         self.scale = 1.0 / math.sqrt(dimension)
-        self.softmax = nn.Softmax(dim=-1)
+        self.tanh = nn.Tanh()
 
         self.output_mode = kwargs.get('output_mode', '')
         self.conv = nn.Conv1d(
@@ -49,7 +49,6 @@ class Attention(nn.Module):
         self.cat_linear = nn.Linear(dimension*2, dimension)
         self.layernorm = nn.LayerNorm(dimension)
         self.output_linear = nn.Linear(dimension, dimension)
-        self.tanh = nn.Tanh()
 
         init.xavier_uniform_(self.query_linear.weight)
         init.xavier_uniform_(self.key_linear.weight)
@@ -107,7 +106,8 @@ class Attention(nn.Module):
         attention_map = torch.matmul(query, key.permute(0, 2, 1))
         if self.scaled:
             attention_map = attention_map.mul_(self.scale)
-        attention_map = self.softmax(attention_map)
+        attention_map = self.tanh(attention_map)
+        # attention_map = F.softmax(attention_map, dim=-1)
         if self.mask and input != memory:
             #To Do (mask for <'pad'>)
             # mask = self.pad_mask()
@@ -131,18 +131,24 @@ class Attention(nn.Module):
         if self.output_mode == 'concat':
             output = torch.cat([output, input], dim=2)
             output = self.pool(F.relu(self.bn(self.conv(output.permute(0, 2, 1))).permute(0, 2, 1)))
-            # output = F.relu(self.cat_linear(output))
+        elif self.output_mode == 'concat_linear':
+            output = torch.cat([output, input], dim=2)
+            output = self.cat_linear(output)
         elif self.output_mode == 'add':
             output = output + input
             # output = self.layernorm(output + input)
-            # output = self.output_linear(output)
+        elif self.output_mode == 'matmul':
+            output = F.softmax(output, dim=1) * input
+        elif self.output_mode == 'linear':
+            output = self.output_linear(output)
         else:
-            # output = self.output_linear(output)
             pass
-        output = self.output_linear(output)
-        output = self.tanh(output)
         if query_squeeze:
             output = output.squeeze(dim=1)
+        else:
+            # output = self.tanh(output)
+            output = F.softmax(output, dim=1)
+            pass
         """
         output:
             (batch_size, output_size, dimension) or (batch_size, dimension)
@@ -170,7 +176,6 @@ class MultiheadAttention(nn.Module):
         self.pool = nn.AdaptiveAvgPool1d(dimension)
         self.cat_linear = nn.Linear(dimension*2, dimension)
         self.output_linear = nn.Linear(dimension, dimension)
-        
         self.tanh = nn.Tanh()
 
         init.xavier_uniform_(self.query_linear.weight)
@@ -228,18 +233,24 @@ class MultiheadAttention(nn.Module):
         if self.output_mode == 'concat':
             output = torch.cat([output, input], dim=2)
             output = self.pool(F.relu(self.bn(self.conv(output.permute(0, 2, 1))).permute(0, 2, 1)))
-            # output = F.relu(self.cat_linear(output))
+        elif self.output_mode == 'concat_linear':
+            output = torch.cat([output, input], dim=2)
+            output = self.cat_linear(output)
         elif self.output_mode == 'add':
             output = output + input
             # output = self.layernorm(output + input)
-            # output = self.output_linear(output)
+        elif self.output_mode == 'matmul':
+            output = F.softmax(output, dim=1) * input
+        elif self.output_mode == 'linear':
+            output = self.output_linear(output)
         else:
-            # output = self.output_linear(output)
             pass
-        # output = self.output_linear(output)
-        # output = self.tanh(output)
         if query_squeeze:
             output = output.squeeze(dim=1)
+        else:
+            # output = self.tanh(output)
+            output = F.softmax(output, dim=1)
+            pass
         """
         output:
             (batch_size, output_size, dimension) or (batch_size, dimension)
